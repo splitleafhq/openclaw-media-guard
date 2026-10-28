@@ -26,14 +26,17 @@ It reads every media key however it is cased or nested, `attachments` items, `me
 
 ## Install
 
-From a checkout:
+Pinned to a tag or commit of a clone:
 
 ```sh
-openclaw plugins install --link --force /path/to/openclaw-media-guard
+openclaw plugins install git:file:///path/to/openclaw-media-guard@<tag or commit> --force --accept-capabilities
 openclaw plugins enable media-guard
 openclaw plugins inspect media-guard --runtime --json
 ```
 
+Or linked to a checkout: `openclaw plugins install --link --force /path/to/openclaw-media-guard`.
+
+- OpenClaw loads the committed `dist/` through `openclaw.runtimeExtensions`, from a git install, a copy, a load path or `--link` alike (`docs/plugins/sdk-entrypoints/package-entries.md:36-38`, 2026.10.8), checked on 2026.10.8: an install runs npm without scripts, so nothing is built then, and a change to `src/` runs only after `npm run build`.
 - `--force` confirms a source that isn't on ClawHub.
 - Default allowed server: `matrix.org`. To set yours: `openclaw config set plugins.entries.media-guard.config '{"mxcServers":["<your homeserver name>"]}' --strict-json`. To read extra channel keys, add `"extraMediaKeys":["<param name>"]`. Config edits apply without a restart.
 - `inspect` should show the plugin as loaded, with `before_tool_call` in `typedHooks`.
@@ -53,7 +56,10 @@ Requires Node 24.16 or later.
 ```sh
 npm ci --ignore-scripts
 npm run lint && npm run typecheck && npm test
+npm run build
 ```
+
+Commit `dist/` with any change to `src/`; CI fails when it doesn't match a fresh build.
 
 Run the checks in a separate clone, or delete `node_modules/` from a checkout you've installed with `--link`: OpenClaw maps `openclaw/plugin-sdk/*` to the gateway's own install, so a second copy can drift from the host.
 

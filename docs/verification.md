@@ -4,6 +4,7 @@
 
 - **Unit tests** (`npm test`) cover every media key in the runtime's list with an http(s) URL, nested, array, `attachments` and JSON-text forms, mixed-case schemes, `MEDIA:` prefixes, local paths, `data:`, buffers, `mxc://` on the allowed and other servers, messages with no media, other tools, unreadable input, the refusal text, and the leak scan.
 - **Typecheck** against the OpenClaw 2026.10.8 plugin SDK, in CI.
+- **Copy install in OpenClaw 2026.10.8:** in an isolated state directory (`OPENCLAW_STATE_DIR`, `OPENCLAW_CONFIG_PATH`), `plugins install <checkout> --force --accept-capabilities` then `plugins inspect media-guard --runtime --json` reports `status: loaded` from `dist/index.js` with `typedHooks: [{ before_tool_call, priority 100 }]`. Without `dist/`, an install fails: "requires compiled runtime output for TypeScript entry ./src/index.ts".
 
 ## Not yet checked on a live gateway
 
