@@ -1,0 +1,32 @@
+{
+  "id": "media-guard",
+  "name": "Media Guard",
+  "description": "Blocks a message that names a remote media URL, which the gateway would fetch from the host. Deterministic; blocks message calls it can't read.",
+  "activation": {
+    "onStartup": true
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "mxcServers": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": "Matrix server names whose mxc:// content URIs a message may use as media. Default: matrix.org.",
+        "default": ["matrix.org"]
+      },
+      "extraMediaKeys": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": "Extra message parameter names, added by a channel plugin, that carry a media source. Matched ignoring case, underscores and hyphens, at any depth.",
+        "default": []
+      }
+    }
+  }
+}
