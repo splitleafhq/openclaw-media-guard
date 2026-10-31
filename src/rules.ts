@@ -56,13 +56,20 @@ export function refusal(source: string, why: string): string {
 const SCHEME = /^([a-z][a-z0-9+.-]*):/iu;
 const MXC = /^mxc:\/\/([^/?#@\\\s]+)\/[A-Za-z0-9_-]+$/iu;
 
-/** The runtime strips a leading `MEDIA:` before it looks at the scheme (web-media-B7oSDJo7.mjs:99-102). */
+/**
+ * The runtime strips a leading `MEDIA:` before it looks at the scheme (web-media-B7oSDJo7.mjs:99-102), and does it twice
+ * (:473, :481), so every prefix is stripped here.
+ */
 function stripDirective(value: string): string {
-  const trimmed = value.replace(/^[\s\p{Cc}]+/u, '');
-  if (/^media:\/\//iu.test(trimmed)) {
-    return trimmed;
+  let current = value.replace(/^[\s\p{Cc}]+/u, '');
+  while (!/^media:\/\//iu.test(current)) {
+    const next = current.replace(/^media\s*:\s*/iu, '').replace(/^[\s\p{Cc}]+/u, '');
+    if (next === current) {
+      break;
+    }
+    current = next;
   }
-  return trimmed.replace(/^media\s*:\s*/iu, '').replace(/^[\s\p{Cc}]+/u, '');
+  return current;
 }
 
 /** A reason this media string is refused, or undefined when it is a local path, data: URI or an allowed mxc:// URI. */
