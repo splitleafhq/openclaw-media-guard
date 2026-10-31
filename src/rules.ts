@@ -140,9 +140,12 @@ function walk(value: unknown, state: Walk, depth: number, inMedia: boolean, inSt
 
 /** The params as the runtime reads them: its JSON text params parsed, other values as given. */
 function parseJsonTextParams(params: Record<string, unknown>): Record<string, unknown> {
-  const parsed: Record<string, unknown> = {};
+  // Spread keeps an own __proto__ key as a property; assigning it onto {} would set the prototype and hide it from the walk.
+  const parsed: Record<string, unknown> = { ...params };
   for (const [key, value] of Object.entries(params)) {
-    parsed[key] = JSON_TEXT_KEYS.has(normalizeKey(key)) && typeof value === 'string' ? parseJsonText(value) : value;
+    if (JSON_TEXT_KEYS.has(normalizeKey(key)) && typeof value === 'string') {
+      parsed[key] = parseJsonText(value);
+    }
   }
   return parsed;
 }

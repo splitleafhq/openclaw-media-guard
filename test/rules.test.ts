@@ -71,6 +71,10 @@ test('JSON-looking text in any other param is not parsed: the runtime sends it a
   assert.equal(check(send({ presentation: JSON.stringify({ title: json }) })), undefined);
 });
 
+test('an own __proto__ param holding a media URL is still refused', () => {
+  assert.ok(check(JSON.parse(`{"action":"send","__proto__":{"media":"${REMOTE}"}}`)));
+});
+
 test('a scheme in mixed case, with leading space or a MEDIA: prefix is still refused', () => {
   for (const url of ['HTTPS://example.com/a', 'HtTp://example.com/a', '  https://example.com/a', '\nhttp://example.com/a', 'MEDIA:https://example.com/a', 'media: HTTP://example.com/a', '\u0001https://example.com/a']) {
     assert.ok(check(send({ media: url })), JSON.stringify(url));
