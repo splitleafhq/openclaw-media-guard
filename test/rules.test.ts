@@ -59,7 +59,16 @@ test('deeply nested media keys and objects under a media key are refused', () =>
 test('JSON text params are read: the runtime parses them before use', () => {
   assert.ok(check(send({ presentation: JSON.stringify({ image: REMOTE }) })));
   assert.ok(check(send({ interactive: JSON.stringify([{ nested: { mediaUrl: REMOTE } }]) })));
+  assert.ok(check(send({ delivery: JSON.stringify({ media: REMOTE }) })));
   assert.equal(check(send({ presentation: '{not json' })), undefined);
+});
+
+test('JSON-looking text in any other param is not parsed: the runtime sends it as text', () => {
+  const json = JSON.stringify({ image: REMOTE });
+  assert.equal(check(send({ message: json })), undefined);
+  assert.equal(check(send({ caption: json })), undefined);
+  assert.equal(check(send({ presentation: { title: json } })), undefined);
+  assert.equal(check(send({ presentation: JSON.stringify({ title: json }) })), undefined);
 });
 
 test('a scheme in mixed case, with leading space or a MEDIA: prefix is still refused', () => {
@@ -127,8 +136,6 @@ test('unreadable or over-nested message input is refused', () => {
     deep = { next: deep };
   }
   assert.match(check(send({ deep })) ?? '', /nested too deeply/u);
-  const many = Array.from({ length: 70 }, () => '{"a":1}');
-  assert.match(check(send({ many })) ?? '', /too many embedded JSON/u);
 });
 
 test('the refusal tells the agent what was blocked and what to do instead', () => {

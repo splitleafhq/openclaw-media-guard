@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Parses JSON text only in the top-level `presentation`, `delivery` and `interactive` params, as the runtime does. JSON-looking message text, which the runtime sends as text, is no longer blocked.
 - Ships compiled `dist/`: an install runs npm without scripts, so it can't build one. `openclaw.runtimeExtensions` points at `./dist/index.js`, which OpenClaw loads from a copy or a load path. CI checks `dist/` matches a fresh build.
 
 First version, built and tested against OpenClaw 2026.10.8.

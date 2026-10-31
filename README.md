@@ -22,7 +22,7 @@ Tool "message" was blocked before execution: Blocked: media "https://example.com
 | `mxc://` on another server, malformed `mxc://` | blocked |
 | `http`, `https`, `ftp`, any other scheme, `file://<other host>`, `\\host\share` | blocked |
 
-It reads every media key however it is cased or nested, `attachments` items, `mediaUrls` arrays, and JSON text params. Details are in [docs/how-it-works.md](docs/how-it-works.md).
+It reads every media key however it is cased or nested, `attachments` items, `mediaUrls` arrays, and the JSON text params the runtime parses. Details are in [docs/how-it-works.md](docs/how-it-works.md).
 
 ## Install
 
