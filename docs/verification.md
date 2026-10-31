@@ -13,6 +13,7 @@
 - That the gateway accepts an `mxc://` URI in a media field. The shared media loader has no `mxc` handling (`web-media-B7oSDJo7.mjs`); whether the Matrix plugin resolves it before then is unchecked.
 - The Matrix server-name and media-id syntax is taken from the Matrix content-repository spec, not checked against a server.
 - Whether other installed channel plugins add media keys not in the default list. Add them to `extraMediaKeys`.
+- Whether other installed channel plugins parse a param of their own from JSON text. The guard parses only `presentation`, `delivery` and `interactive`, the params core OpenClaw 2026.10.8 parses; a media URL inside any other param's JSON text passes. Only core was checked, not `@openclaw/matrix` or other channel plugins. No setting covers this; a plugin that does it needs its key added to the guard's list.
 
 ## Not covered
 
