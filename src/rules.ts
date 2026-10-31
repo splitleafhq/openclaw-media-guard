@@ -29,7 +29,12 @@ export const STRUCTURED_KEYS: readonly string[] = [...MEDIA_KEYS, 'url'];
 
 const ATTACHMENTS_KEY = 'attachments';
 const MAX_DEPTH = 32;
-const MAX_JSON_PARSES = 64;
+
+/**
+ * Top-level params the runtime parses from JSON text, once, before use (`parseJsonMessageParam`,
+ * message-action-runner-Bjmjjet2.mjs:1861-1863, OpenClaw 2026.10.8). Any other string is sent or stored as text.
+ */
+const JSON_TEXT_KEYS: ReadonlySet<string> = new Set(['presentation', 'delivery', 'interactive']);
 
 export interface MediaRules {
   mxcServers: readonly string[];
@@ -108,7 +113,6 @@ interface Walk {
   rules: MediaRules;
   keys: ReadonlySet<string>;
   structured: ReadonlySet<string>;
-  parses: number;
 }
 
 function walk(value: unknown, state: Walk, depth: number, inMedia: boolean, inStructured: boolean): string | undefined {
@@ -116,10 +120,7 @@ function walk(value: unknown, state: Walk, depth: number, inMedia: boolean, inSt
     return 'Blocked: the message input is nested too deeply to check.';
   }
   if (typeof value === 'string') {
-    if (inMedia) {
-      return mediaRefusal(value, state.rules);
-    }
-    return walkJsonText(value, state, depth, inStructured);
+    return inMedia ? mediaRefusal(value, state.rules) : undefined;
   }
   if (Array.isArray(value)) {
     for (const item of value) {
@@ -144,23 +145,25 @@ function walk(value: unknown, state: Walk, depth: number, inMedia: boolean, inSt
   return undefined;
 }
 
-/** Some message params arrive as JSON text and are parsed by the runtime (message-action-runner-Bjmjjet2.mjs:1861-1863). */
-function walkJsonText(text: string, state: Walk, depth: number, inStructured: boolean): string | undefined {
-  const trimmed = text.trim();
-  if (!(trimmed.startsWith('{') || trimmed.startsWith('['))) {
-    return undefined;
+/** The params as the runtime reads them: its JSON text params parsed, other values as given. */
+function parseJsonTextParams(params: Record<string, unknown>): Record<string, unknown> {
+  // Spread keeps an own __proto__ key as a property; assigning it onto {} would set the prototype and hide it from the walk.
+  const parsed: Record<string, unknown> = { ...params };
+  for (const [key, value] of Object.entries(params)) {
+    if (JSON_TEXT_KEYS.has(normalizeKey(key)) && typeof value === 'string') {
+      parsed[key] = parseJsonText(value);
+    }
   }
-  let parsed: unknown;
+  return parsed;
+}
+
+/** Invalid JSON fails the call in the runtime ("must be valid JSON"), so nothing is fetched and it passes here. */
+function parseJsonText(text: string): unknown {
   try {
-    parsed = JSON.parse(trimmed);
+    return JSON.parse(text.trim());
   } catch {
     return undefined;
   }
-  state.parses += 1;
-  if (state.parses > MAX_JSON_PARSES) {
-    return 'Blocked: the message input has too many embedded JSON values to check.';
-  }
-  return walk(parsed, state, depth + 1, false, inStructured);
 }
 
 /** A reason to block this message call, or undefined to let it through. Input it can't read is blocked. */
@@ -177,7 +180,6 @@ export function messageBlockReason(toolName: string, params: unknown, rules: Med
     rules,
     keys: new Set([...MEDIA_KEYS, ...extra]),
     structured: new Set([...STRUCTURED_KEYS, ...extra]),
-    parses: 0,
   };
-  return walk(params, state, 0, false, false);
+  return walk(parseJsonTextParams(params), state, 0, false, false);
 }

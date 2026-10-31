@@ -21,7 +21,7 @@ The runtime's own media-source keys (`dist/message-action-normalization-CYaa9UED
 
 Channel plugins declare their own through `describeMessageTool().mediaSourceParams` (`plugins/sdk-channel-plugins/status-and-media.md`); list any others in `extraMediaKeys`.
 
-The runtime reads `mediaUrl` and `media_url` alike (`param-key-BvJDza_v.mjs:7-11`), so keys are matched ignoring case, underscores and hyphens, at any depth. The whole input is walked: nested objects, arrays, and JSON text params the runtime parses (`message-action-runner-Bjmjjet2.mjs:1861-1863`). `buffer` is base64, not a source to fetch, so it passes.
+The runtime reads `mediaUrl` and `media_url` alike (`param-key-BvJDza_v.mjs:7-11`), so keys are matched ignoring case, underscores and hyphens, at any depth. The whole input is walked: nested objects, arrays, and the top-level `presentation`, `delivery` and `interactive` params when they arrive as JSON text, which the runtime parses once before use (`parseJsonMessageParam`, `message-action-runner-Bjmjjet2.mjs:1861-1863`). Other strings, the message text included, are not parsed: the runtime sends them as text. `buffer` is base64, not a source to fetch, so it passes.
 
 The media loader strips a leading `MEDIA:` and surrounding whitespace (`web-media-B7oSDJo7.mjs:99-102`) twice before it looks at the scheme (`:473`, `:481`), then fetches anything starting `http://` or `https://` (`:515`, `url-protocol-De2aQ55s.mjs:2`), so `MEDIA:MEDIA:https://...` is fetched. The plugin strips every leading `MEDIA:` prefix, so it refuses that and any longer chain.
 
@@ -34,4 +34,4 @@ Local paths are not checked against roots: the gateway enforces its own local-ro
 ## Failing closed
 
 - Parameters that aren't an object are blocked.
-- Input nested deeper than 32 levels, or holding more than 64 JSON text values, is blocked.
+- Input nested deeper than 32 levels is blocked.
