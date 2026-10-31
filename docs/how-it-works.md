@@ -23,7 +23,7 @@ Channel plugins declare their own through `describeMessageTool().mediaSourcePara
 
 The runtime reads `mediaUrl` and `media_url` alike (`param-key-BvJDza_v.mjs:7-11`), so keys are matched ignoring case, underscores and hyphens, at any depth. The whole input is walked: nested objects, arrays, and JSON text params the runtime parses (`message-action-runner-Bjmjjet2.mjs:1861-1863`). `buffer` is base64, not a source to fetch, so it passes.
 
-The media loader strips a leading `MEDIA:` and surrounding whitespace before it looks at the scheme (`web-media-B7oSDJo7.mjs:99-102`), so the plugin does the same. It then fetches anything starting `http://` or `https://` (`url-protocol-De2aQ55s.mjs:2`).
+The media loader strips a leading `MEDIA:` and surrounding whitespace (`web-media-B7oSDJo7.mjs:99-102`) twice before it looks at the scheme (`:473`, `:481`), then fetches anything starting `http://` or `https://` (`:515`, `url-protocol-De2aQ55s.mjs:2`), so `MEDIA:MEDIA:https://...` is fetched. The plugin strips every leading `MEDIA:` prefix, so it refuses that and any longer chain.
 
 ## What passes
 
