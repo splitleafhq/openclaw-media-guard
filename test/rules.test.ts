@@ -75,8 +75,8 @@ test('an own __proto__ param holding a media URL is still refused', () => {
   assert.ok(check(JSON.parse(`{"action":"send","__proto__":{"media":"${REMOTE}"}}`)));
 });
 
-test('a scheme in mixed case, with leading space or a MEDIA: prefix is still refused', () => {
-  for (const url of ['HTTPS://example.com/a', 'HtTp://example.com/a', '  https://example.com/a', '\nhttp://example.com/a', 'MEDIA:https://example.com/a', 'media: HTTP://example.com/a', '\u0001https://example.com/a']) {
+test('a scheme in mixed case, with leading space or one or more MEDIA: prefixes is still refused', () => {
+  for (const url of ['HTTPS://example.com/a', 'HtTp://example.com/a', '  https://example.com/a', '\nhttp://example.com/a', 'MEDIA:https://example.com/a', 'media: HTTP://example.com/a', '\u0001https://example.com/a', 'MEDIA:MEDIA:https://example.com/a', 'MEDIA: media:MEDIA:http://example.com/a']) {
     assert.ok(check(send({ media: url })), JSON.stringify(url));
   }
 });
