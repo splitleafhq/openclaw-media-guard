@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.1
 
 - A block reason names the field and the kind of source, never the value, so a blocked URL stays out of the gateway log and the model's context.
 - Parses JSON text only in the top-level `presentation`, `delivery` and `interactive` params, as the runtime does. JSON-looking message text, which the runtime sends as text, is no longer blocked.

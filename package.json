@@ -1,6 +1,6 @@
 {
-  "name": "@seriouslysean/openclaw-media-guard",
-  "version": "0.1.0",
+  "name": "@splitleafhq/openclaw-media-guard",
+  "version": "0.1.1",
   "private": true,
   "description": "An OpenClaw plugin that stops agents from putting a remote media URL in a message.",
   "keywords": [
@@ -10,11 +10,11 @@
     "message",
     "media"
   ],
-  "homepage": "https://github.com/seriouslysean/openclaw-media-guard#readme",
-  "bugs": "https://github.com/seriouslysean/openclaw-media-guard/issues",
+  "homepage": "https://github.com/splitleafhq/openclaw-media-guard#readme",
+  "bugs": "https://github.com/splitleafhq/openclaw-media-guard/issues",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/seriouslysean/openclaw-media-guard.git"
+    "url": "git+https://github.com/splitleafhq/openclaw-media-guard.git"
   },
   "type": "module",
   "license": "MIT",
