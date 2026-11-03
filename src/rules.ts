@@ -50,10 +50,10 @@ export function normalizeKey(key: string): string {
   return key.toLowerCase().replaceAll(/[_\s-]/gu, '');
 }
 
-export function refusal(source: string, why: string): string {
-  const shown = source.length > 80 ? `${source.slice(0, 80)}...` : source;
+/** Names the field and the kind of source, never the value: this text reaches the gateway log and the model. */
+export function refusal(field: string, why: string): string {
   return (
-    `Blocked: media "${shown}" ${why}. A message may only attach a local file, a data: URI, a base64 buffer, ` +
+    `Blocked: media field "${field}" ${why}. A message may only attach a local file, a data: URI, a base64 buffer, ` +
     `or an mxc:// URI on an allowed Matrix server. Remote URLs are not allowed; use a local file or ask the owner.`
   );
 }
@@ -78,13 +78,13 @@ function stripDirective(value: string): string {
 }
 
 /** A reason this media string is refused, or undefined when it is a local path, data: URI or an allowed mxc:// URI. */
-export function mediaRefusal(raw: string, rules: MediaRules): string | undefined {
+export function mediaRefusal(raw: string, rules: MediaRules, field = 'media'): string | undefined {
   const value = stripDirective(raw).trimEnd();
   if (value === '') {
     return undefined;
   }
   if (value.startsWith('\\\\')) {
-    return refusal(raw, 'is a network path');
+    return refusal(field, 'is a network path');
   }
   const scheme = SCHEME.exec(value)?.[1]?.toLowerCase();
   if (scheme === undefined || scheme.length === 1) {
@@ -96,23 +96,25 @@ export function mediaRefusal(raw: string, rules: MediaRules): string | undefined
   if (scheme === 'mxc') {
     const server = MXC.exec(value)?.[1]?.toLowerCase();
     if (server === undefined) {
-      return refusal(raw, 'is not a valid mxc:// content URI');
+      return refusal(field, 'is not a valid mxc:// content URI');
     }
-    return rules.mxcServers.includes(server) ? undefined : refusal(raw, `is on a Matrix server that is not allowed (${server})`);
+    return rules.mxcServers.includes(server) ? undefined : refusal(field, 'is on a Matrix server that is not allowed');
   }
   if (scheme === 'file') {
-    return /^file:(?:\/\/(?:localhost)?\/|\/(?!\/))/iu.test(value) ? undefined : refusal(raw, 'is a file: URL on another host');
+    return /^file:(?:\/\/(?:localhost)?\/|\/(?!\/))/iu.test(value) ? undefined : refusal(field, 'is a file: URL on another host');
   }
   if (scheme === 'media') {
     return undefined;
   }
-  return refusal(raw, `is a remote or unknown "${scheme}:" source, which the gateway may fetch from the host`);
+  return refusal(field, 'is a remote or unknown source, which the gateway may fetch from the host');
 }
 
 interface Walk {
   rules: MediaRules;
   keys: ReadonlySet<string>;
   structured: ReadonlySet<string>;
+  /** The media key being walked: from the known key list, so it carries no model text. */
+  field: string;
 }
 
 function walk(value: unknown, state: Walk, depth: number, inMedia: boolean, inStructured: boolean): string | undefined {
@@ -120,7 +122,7 @@ function walk(value: unknown, state: Walk, depth: number, inMedia: boolean, inSt
     return 'Blocked: the message input is nested too deeply to check.';
   }
   if (typeof value === 'string') {
-    return inMedia ? mediaRefusal(value, state.rules) : undefined;
+    return inMedia ? mediaRefusal(value, state.rules, state.field) : undefined;
   }
   if (Array.isArray(value)) {
     for (const item of value) {
@@ -136,6 +138,9 @@ function walk(value: unknown, state: Walk, depth: number, inMedia: boolean, inSt
       const name = normalizeKey(key);
       const media = state.keys.has(name) || (inStructured && state.structured.has(name)) || (inMedia && name === 'url');
       const structured = inStructured || inMedia || name === ATTACHMENTS_KEY;
+      if (media) {
+        state.field = name;
+      }
       const found = walk(item, state, depth + 1, media, structured);
       if (found) {
         return found;
@@ -180,6 +185,7 @@ export function messageBlockReason(toolName: string, params: unknown, rules: Med
     rules,
     keys: new Set([...MEDIA_KEYS, ...extra]),
     structured: new Set([...STRUCTURED_KEYS, ...extra]),
+    field: 'media',
   };
   return walk(parseJsonTextParams(params), state, 0, false, false);
 }

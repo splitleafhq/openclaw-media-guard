@@ -98,7 +98,8 @@ test('an mxc URI on the owner server passes; another server is refused', () => {
   assert.equal(check(send({ media: 'mxc://matrix.org/AbC_123-x' })), undefined);
   assert.equal(check(send({ media: 'MXC://Matrix.ORG/AbC' })), undefined);
   assert.equal(check(send({ attachments: [{ mediaUrl: 'mxc://matrix.org/AbC' }] })), undefined);
-  assert.match(check(send({ media: 'mxc://evil.example/AbC' })) ?? '', /not allowed \(evil\.example\)/u);
+  assert.match(check(send({ media: 'mxc://evil.example/AbC' })) ?? '', /not allowed/u);
+  assert.doesNotMatch(check(send({ media: 'mxc://evil.example/AbC' })) ?? '', /evil/u);
   assert.ok(check(send({ media: 'mxc://matrix.org.evil.example/AbC' })));
   assert.ok(check(send({ media: ['mxc://matrix.org', '@', 'evil.example/AbC'].join('') })));
   assert.ok(check(send({ media: 'mxc://matrix.org/AbC/../x' })));
@@ -144,9 +145,8 @@ test('unreadable or over-nested message input is refused', () => {
 
 test('the refusal tells the agent what was blocked and what to do instead', () => {
   const reason = check(send({ mediaUrl: REMOTE })) ?? '';
-  assert.match(reason, /^Blocked: media "https:\/\/example\.com\/a\.png\?token=secret"/u);
+  assert.match(reason, /^Blocked: media field "mediaurl" is a remote or unknown source/u);
+  assert.doesNotMatch(reason, /example|token|secret/u);
   assert.match(reason, /local file/u);
   assert.match(reason, /ask the owner/u);
-  const long = check(send({ media: `https://example.com/${'a'.repeat(300)}` })) ?? '';
-  assert.ok(long.length < 400, 'a long URL is truncated in the refusal');
 });
