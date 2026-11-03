@@ -38,9 +38,9 @@ export function isRecord(value) {
 export function normalizeKey(key) {
     return key.toLowerCase().replaceAll(/[_\s-]/gu, '');
 }
-export function refusal(source, why) {
-    const shown = source.length > 80 ? `${source.slice(0, 80)}...` : source;
-    return (`Blocked: media "${shown}" ${why}. A message may only attach a local file, a data: URI, a base64 buffer, ` +
+/** Names the field and the kind of source, never the value: this text reaches the gateway log and the model. */
+export function refusal(field, why) {
+    return (`Blocked: media field "${field}" ${why}. A message may only attach a local file, a data: URI, a base64 buffer, ` +
         `or an mxc:// URI on an allowed Matrix server. Remote URLs are not allowed; use a local file or ask the owner.`);
 }
 const SCHEME = /^([a-z][a-z0-9+.-]*):/iu;
@@ -61,13 +61,13 @@ function stripDirective(value) {
     return current;
 }
 /** A reason this media string is refused, or undefined when it is a local path, data: URI or an allowed mxc:// URI. */
-export function mediaRefusal(raw, rules) {
+export function mediaRefusal(raw, rules, field = 'media') {
     const value = stripDirective(raw).trimEnd();
     if (value === '') {
         return undefined;
     }
     if (value.startsWith('\\\\')) {
-        return refusal(raw, 'is a network path');
+        return refusal(field, 'is a network path');
     }
     const scheme = SCHEME.exec(value)?.[1]?.toLowerCase();
     if (scheme === undefined || scheme.length === 1) {
@@ -79,24 +79,24 @@ export function mediaRefusal(raw, rules) {
     if (scheme === 'mxc') {
         const server = MXC.exec(value)?.[1]?.toLowerCase();
         if (server === undefined) {
-            return refusal(raw, 'is not a valid mxc:// content URI');
+            return refusal(field, 'is not a valid mxc:// content URI');
         }
-        return rules.mxcServers.includes(server) ? undefined : refusal(raw, `is on a Matrix server that is not allowed (${server})`);
+        return rules.mxcServers.includes(server) ? undefined : refusal(field, 'is on a Matrix server that is not allowed');
     }
     if (scheme === 'file') {
-        return /^file:(?:\/\/(?:localhost)?\/|\/(?!\/))/iu.test(value) ? undefined : refusal(raw, 'is a file: URL on another host');
+        return /^file:(?:\/\/(?:localhost)?\/|\/(?!\/))/iu.test(value) ? undefined : refusal(field, 'is a file: URL on another host');
     }
     if (scheme === 'media') {
         return undefined;
     }
-    return refusal(raw, `is a remote or unknown "${scheme}:" source, which the gateway may fetch from the host`);
+    return refusal(field, 'is a remote or unknown source, which the gateway may fetch from the host');
 }
 function walk(value, state, depth, inMedia, inStructured) {
     if (depth > MAX_DEPTH) {
         return 'Blocked: the message input is nested too deeply to check.';
     }
     if (typeof value === 'string') {
-        return inMedia ? mediaRefusal(value, state.rules) : undefined;
+        return inMedia ? mediaRefusal(value, state.rules, state.field) : undefined;
     }
     if (Array.isArray(value)) {
         for (const item of value) {
@@ -112,6 +112,9 @@ function walk(value, state, depth, inMedia, inStructured) {
             const name = normalizeKey(key);
             const media = state.keys.has(name) || (inStructured && state.structured.has(name)) || (inMedia && name === 'url');
             const structured = inStructured || inMedia || name === ATTACHMENTS_KEY;
+            if (media) {
+                state.field = name;
+            }
             const found = walk(item, state, depth + 1, media, structured);
             if (found) {
                 return found;
@@ -154,6 +157,7 @@ export function messageBlockReason(toolName, params, rules) {
         rules,
         keys: new Set([...MEDIA_KEYS, ...extra]),
         structured: new Set([...STRUCTURED_KEYS, ...extra]),
+        field: 'media',
     };
     return walk(parseJsonTextParams(params), state, 0, false, false);
 }
