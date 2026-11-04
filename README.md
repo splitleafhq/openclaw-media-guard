@@ -59,7 +59,7 @@ npm run lint && npm run typecheck && npm test
 npm run build
 ```
 
-A pre-push gate runs these checks before each push: `lefthook install` turns it on (`lefthook.yml`).
+A pre-push gate runs `scripts/check`, these checks, before each push: `git config core.hooksPath .githooks` turns it on once per clone.
 
 Commit `dist/` with any change to `src/`; CI fails when it doesn't match a fresh build.
 
