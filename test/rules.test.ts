@@ -137,8 +137,11 @@ test('unreadable or over-nested message input is refused', () => {
   assert.ok(check(send({ deep })));
 });
 
-test('the refusal names the field and never echoes the blocked URL', () => {
+test('the refusal names the field, says what to do instead, and never echoes the blocked URL', () => {
   const reason = check(send({ mediaUrl: REMOTE })) ?? '';
   assert.match(reason, /"mediaurl"/u);
+  // The agent reads this to recover; the README documents the ending.
+  assert.match(reason, /local file/u);
+  assert.match(reason, /ask the owner/u);
   assert.doesNotMatch(reason, /example|token|secret/u);
 });
