@@ -11,7 +11,7 @@ When an agent names a remote media URL in a message, the gateway fetches it itse
 A `message` call from an agent with a media-source field that isn't one of the allowed forms:
 
 ```text
-Tool "message" was blocked before execution: Blocked: media "https://example.com/a.png?token=..." is a remote or unknown "https:" source, which the gateway may fetch from the host. A message may only attach a local file, a data: URI, a base64 buffer, or an mxc:// URI on an allowed Matrix server. Remote URLs are not allowed; use a local file or ask the owner.
+Tool "message" was blocked before execution: Blocked: media field "mediaurl" is a remote or unknown source, which the gateway may fetch from the host. A message may only attach a local file, a data: URI, a base64 buffer, or an mxc:// URI on an allowed Matrix server. Remote URLs are not allowed; use a local file or ask the owner.
 ```
 
 | Source | Result |
