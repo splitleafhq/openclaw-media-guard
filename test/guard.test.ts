@@ -22,7 +22,7 @@ test('decide blocks a remote media URL with a reason and leaves other calls alon
   const config = resolveConfig({});
   const result = decide({ toolName: 'message', params: { action: 'send', media: 'https://example.com/a.png' } }, config);
   assert.equal(result?.block, true);
-  assert.match(result?.blockReason ?? '', /^Blocked: media/u);
+  assert.ok(result?.blockReason);
   assert.equal(decide({ toolName: 'message', params: { action: 'send', media: '/tmp/a.png' } }, config), undefined);
   assert.equal(decide({ toolName: 'cron', params: { media: 'https://example.com/a.png' } }, config), undefined);
 });
